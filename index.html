@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Productivity Dashboard</title>
+
+    <!-- Tailwind CDN (for quick prototyping) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Optional: small custom adjustments -->
+    <style>
+      /* subtle card shimmer placeholder class if you want to use it */
+      .pulse-bg {
+        @apply bg-gray-200 animate-pulse;
+      }
+    </style>
+  </head>
+
+  <body class="bg-slate-50 text-gray-800 min-h-screen antialiased">
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center space-x-4">
+            <h1 class="text-2xl font-semibold text-indigo-600">
+              Productivity Dashboard
+            </h1>
+            <p class="text-sm text-gray-500 hidden sm:inline">
+              Todos • Pomodoro • Expenses • Weather • Notes
+            </p>
+          </div>
+
+          <div class="flex items-center space-x-3">
+            <!-- global search -->
+            <div
+              class="hidden md:flex items-center bg-slate-100 rounded-lg px-3 py-1"
+            >
+              <svg
+                class="w-5 h-5 text-gray-400 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"
+                />
+              </svg>
+              <input
+                id="searchInput"
+                class="bg-transparent outline-none text-sm"
+                placeholder="Search notes / tasks..."
+              />
+              <button
+                id="clearSearch"
+                class="ml-2 text-gray-400 hover:text-gray-600 hidden"
+              >
+                ✖
+              </button>
+            </div>
+
+            <!-- sort -->
+            <div class="flex items-center space-x-2">
+              <label for="sort" class="text-sm text-gray-500 hidden md:inline"
+                >Sort</label
+              >
+              <select
+                id="sort"
+                class="border border-slate-200 rounded-md px-2 py-1 text-sm bg-white"
+              >
+                <option value="az">A - Z</option>
+                <option value="za">Z - A</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- LEFT COLUMN (Kanban + Notes) - span 2 on wide screens -->
+        <section class="lg:col-span-2 space-y-6">
+          <!-- Kanban / Todo board -->
+          <div
+            class="bg-white border border-slate-200 rounded-xl shadow-sm p-4"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold">Kanban Board</h2>
+              <div class="flex items-center space-x-2">
+                <button
+                  id="addTaskBtn"
+                  class="text-sm px-3 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
+                >
+                  New Task
+                </button>
+              </div>
+            </div>
+
+            <!-- quick add form (hidden by JS initially) -->
+            <form
+              id="todoForm"
+              class="mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3"
+            >
+              <input
+                id="taskTitle"
+                type="text"
+                placeholder="Task title"
+                class="col-span-2 border rounded-md px-3 py-2"
+                required
+              />
+              <button
+                type="submit"
+                class="bg-green-600 text-white rounded-md px-3 py-2"
+              >
+                Add
+              </button>
+            </form>
+
+            <!-- Kanban columns -->
+            <div id="kanban" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <!-- Column: Todo -->
+              <div class="bg-slate-50 border border-slate-100 rounded-lg p-3">
+                <h3 class="text-sm font-semibold mb-2">To do</h3>
+                <div
+                  class="space-y-3 min-h-[120px]"
+                  data-column="todo"
+                  id="col-todo"
+                >
+                  <!-- task cards inserted here -->
+                  <div
+                    class="p-3 bg-white rounded-md shadow-sm border border-slate-100"
+                  >
+                    <h4 class="font-medium text-sm">Example Task</h4>
+                    <p class="text-xs text-gray-500 mt-1">Short description…</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Column: In Progress -->
+              <div class="bg-slate-50 border border-slate-100 rounded-lg p-3">
+                <h3 class="text-sm font-semibold mb-2">In progress</h3>
+                <div
+                  class="space-y-3 min-h-[120px]"
+                  data-column="inprogress"
+                  id="col-inprogress"
+                >
+                  <!-- task cards -->
+                </div>
+              </div>
+
+              <!-- Column: Done -->
+              <div class="bg-slate-50 border border-slate-100 rounded-lg p-3">
+                <h3 class="text-sm font-semibold mb-2">Done</h3>
+                <div
+                  class="space-y-3 min-h-[120px]"
+                  data-column="done"
+                  id="col-done"
+                >
+                  <!-- task cards -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div
+            class="bg-white border border-slate-200 rounded-xl shadow-sm p-4"
+          >
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold">Notes</h2>
+              <div class="text-sm text-gray-500">
+                Validation: title required, body min 10 chars
+              </div>
+            </div>
+
+            <!-- note form -->
+            <form id="notesForm" class="grid grid-cols-1 gap-3">
+              <input
+                id="noteTitle"
+                type="text"
+                placeholder="Note title"
+                class="border rounded-md px-3 py-2"
+                required
+              />
+              <textarea
+                id="noteBody"
+                rows="3"
+                placeholder="Write a short note..."
+                class="border rounded-md px-3 py-2"
+                required
+              ></textarea>
+
+              <div class="flex items-center justify-between">
+                <div class="text-xs text-gray-500">
+                  Tip: press Ctrl+Enter to save
+                </div>
+                <div class="flex items-center space-x-2">
+                  <button
+                    type="submit"
+                    class="bg-indigo-600 text-white px-3 py-1 rounded-md"
+                  >
+                    Save Note
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            <!-- notes list -->
+            <div
+              id="notesList"
+              class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3"
+            >
+              <!-- note items inserted here -->
+              <article
+                class="bg-slate-50 border border-slate-100 p-3 rounded-md"
+              >
+                <h4 class="font-semibold text-sm">Sample note</h4>
+                <p class="text-sm text-gray-600 mt-1">
+                  This is a demo note to show layout.
+                </p>
+                <div class="mt-2 flex items-center justify-between">
+                  <small class="text-xs text-gray-400">2 days ago</small>
+                  <div class="space-x-2">
+                    <button
+                      class="text-xs px-2 py-1 bg-white border rounded text-gray-600"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      class="text-xs px-2 py-1 bg-white border rounded text-red-500"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <!-- RIGHT COLUMN (Widgets) -->
+        <aside class="space-y-6">
+          <!-- Pomodoro -->
+          <div
+            class="bg-white border border-slate-200 rounded-xl shadow-sm p-4"
+          >
+            <h2 class="text-lg font-semibold mb-3">Pomodoro Timer</h2>
+            <div id="pomodoro" class="flex flex-col items-center space-y-4">
+              <div class="text-4xl font-mono font-bold" id="timerDisplay">
+                25:00
+              </div>
+              <div class="flex items-center space-x-2">
+                <button
+                  id="startBtn"
+                  class="px-4 py-2 bg-green-600 text-white rounded-md"
+                >
+                  Start
+                </button>
+                <button
+                  id="pauseBtn"
+                  class="px-4 py-2 bg-yellow-400 text-white rounded-md"
+                >
+                  Pause
+                </button>
+                <button
+                  id="resetBtn"
+                  class="px-4 py-2 bg-red-500 text-white rounded-md"
+                >
+                  Reset
+                </button>
+              </div>
+              <div class="timerModes w-full flex justify-center space-x-4 mt-4">
+                <!-- Work Button -->
+                <button
+                  class="workBtn px-4 py-2 bg-red-500 text-white rounded-lg shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
+                >
+                  Work
+                </button>
+
+                <!-- Short Break Button -->
+                <button
+                  class="shortBreakBtn px-4 py-2 bg-green-500 text-white rounded-lg shadow hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+                >
+                  Short Break
+                </button>
+
+                <!-- Long Break Button -->
+                <button
+                  class="longBreakBtn px-4 py-2 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                >
+                  Long Break
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Expense tracker -->
+          <div
+            class="bg-white border border-slate-200 rounded-xl shadow-sm p-4"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <h2 class="text-lg font-semibold">Expense Tracker</h2>
+              <div class="text-sm text-gray-500">
+                Balance: <span id="balance" class="font-medium">₹0</span>
+              </div>
+            </div>
+
+            <form id="expenseForm" class="grid grid-cols-1 gap-2 mb-3">
+              <input
+                id="expenseDesc"
+                type="text"
+                placeholder="Description"
+                class="border rounded-md px-3 py-2"
+                required
+              />
+              <div class="grid grid-cols-2 gap-2">
+                <input
+                  id="expenseAmount"
+                  type="number"
+                  placeholder="Amount"
+                  class="border rounded-md px-3 py-2"
+                  required
+                />
+                <select id="expenseType" class="border rounded-md px-3 py-2">
+                  <option value="expense">Expense</option>
+                  <option value="income">Income</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                class="bg-indigo-600 text-white px-3 py-2 rounded-md"
+              >
+                Add
+              </button>
+            </form>
+
+            <ul id="transactions" class="space-y-2 text-sm">
+              <!-- transaction items -->
+              <li
+                class="flex items-center justify-between bg-slate-50 p-2 rounded border"
+              >
+                <div>
+                  <div class="font-medium">Grocery</div>
+                  <div class="text-xs text-gray-500">Food</div>
+                </div>
+                <div class="text-sm text-red-500">- ₹200</div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Weather widget -->
+          <div
+            class="bg-white border border-slate-200 rounded-xl shadow-sm p-4"
+          >
+            <h2 class="text-lg font-semibold mb-3">Weather</h2>
+
+            <form id="weatherForm" class="flex items-center space-x-2 mb-3">
+              <input
+                id="cityInput"
+                type="text"
+                placeholder="City name"
+                class="flex-1 border rounded-md px-3 py-2"
+              />
+              <button
+                type="submit"
+                class="bg-indigo-600 text-white px-3 py-2 rounded-md"
+              >
+                Search
+              </button>
+            </form>
+
+            <div id="weatherResult" class="text-sm text-gray-600">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div id="weatherCity" class="font-medium">
+                    No city selected
+                  </div>
+                  <div id="weatherDesc" class="text-xs">
+                    Search for a city to see weather
+                  </div>
+                </div>
+                <div id="weatherTemp" class="text-2xl font-bold">--°C</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+
+    <!-- Footer / small helper -->
+    <footer
+      class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-sm text-gray-500"
+    >
+      <div class="flex justify-between items-center">
+        <div>Made with ❤️ — Productivity Dashboard Demo</div>
+      </div>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
