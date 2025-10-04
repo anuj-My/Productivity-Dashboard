@@ -113,6 +113,11 @@
                 class="col-span-2 border rounded-md px-3 py-2"
                 required
               />
+              <select id="taskColumn" class="border rounded-md px-3 py-2">
+                <option value="todo">To do</option>
+                <option value="inprogress">In progress</option>
+                <option value="done">Done</option>
+              </select>
               <button
                 type="submit"
                 class="bg-green-600 text-white rounded-md px-3 py-2"
@@ -125,44 +130,56 @@
             <div id="kanban" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <!-- Column: Todo -->
               <div class="bg-slate-50 border border-slate-100 rounded-lg p-3">
-                <h3 class="text-sm font-semibold mb-2">To do</h3>
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold">To do</h3>
+                  <span
+                    id="todo-count"
+                    class="text-xs bg-green-100 text-green-600 font-medium px-2 py-0.5 rounded-full"
+                  >
+                    0
+                  </span>
+                </div>
                 <div
                   class="space-y-3 min-h-[120px]"
                   data-column="todo"
                   id="col-todo"
-                >
-                  <!-- task cards inserted here -->
-                  <div
-                    class="p-3 bg-white rounded-md shadow-sm border border-slate-100"
-                  >
-                    <h4 class="font-medium text-sm">Example Task</h4>
-                    <p class="text-xs text-gray-500 mt-1">Short description…</p>
-                  </div>
-                </div>
+                ></div>
               </div>
 
               <!-- Column: In Progress -->
               <div class="bg-slate-50 border border-slate-100 rounded-lg p-3">
-                <h3 class="text-sm font-semibold mb-2">In progress</h3>
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold">In progress</h3>
+                  <span
+                    id="progress-count"
+                    class="text-xs bg-green-100 text-green-600 font-medium px-2 py-0.5 rounded-full"
+                  >
+                    0
+                  </span>
+                </div>
                 <div
                   class="space-y-3 min-h-[120px]"
                   data-column="inprogress"
                   id="col-inprogress"
-                >
-                  <!-- task cards -->
-                </div>
+                ></div>
               </div>
 
               <!-- Column: Done -->
               <div class="bg-slate-50 border border-slate-100 rounded-lg p-3">
-                <h3 class="text-sm font-semibold mb-2">Done</h3>
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold">Done</h3>
+                  <span
+                    id="done-count"
+                    class="text-xs bg-green-100 text-green-600 font-medium px-2 py-0.5 rounded-full"
+                  >
+                    0
+                  </span>
+                </div>
                 <div
                   class="space-y-3 min-h-[120px]"
                   data-column="done"
                   id="col-done"
-                >
-                  <!-- task cards -->
-                </div>
+                ></div>
               </div>
             </div>
           </div>
@@ -305,8 +322,20 @@
           >
             <div class="flex items-center justify-between mb-3">
               <h2 class="text-lg font-semibold">Expense Tracker</h2>
-              <div class="text-sm text-gray-500">
-                Balance: <span id="balance" class="font-medium">₹0</span>
+              <div class="flex items-center gap-3">
+                <!-- 🔽 Filter Dropdown -->
+                <div class="text-sm text-gray-500">
+                  Balance: <span id="balance" class="font-medium">₹0</span>
+                </div>
+
+                <select
+                  id="filterType"
+                  class="border rounded-md px-2 py-1 text-sm"
+                >
+                  <option value="all">All</option>
+                  <option value="income">Income</option>
+                  <option value="expense">Expense</option>
+                </select>
               </div>
             </div>
 
@@ -339,18 +368,8 @@
               </button>
             </form>
 
-            <ul id="transactions" class="space-y-2 text-sm">
-              <!-- transaction items -->
-              <li
-                class="flex items-center justify-between bg-slate-50 p-2 rounded border"
-              >
-                <div>
-                  <div class="font-medium">Grocery</div>
-                  <div class="text-xs text-gray-500">Food</div>
-                </div>
-                <div class="text-sm text-red-500">- ₹200</div>
-              </li>
-            </ul>
+            <!-- Transactions -->
+            <ul id="transactions" class="space-y-2 text-sm"></ul>
           </div>
 
           <!-- Weather widget -->
@@ -374,17 +393,44 @@
               </button>
             </form>
 
+            <div id="errorBox" class="max-w-md mx-auto my-4"></div>
+
             <div id="weatherResult" class="text-sm text-gray-600">
-              <div class="flex items-center justify-between">
-                <div>
-                  <div id="weatherCity" class="font-medium">
+              <div
+                class="max-w-sm mx-auto bg-white shadow-lg rounded-2xl p-6 flex flex-col items-center space-y-4"
+              >
+                <!-- Weather Icon -->
+                <div
+                  class="bg-blue-100 p-4 rounded-full flex items-center justify-center w-24 h-24"
+                >
+                  <img
+                    id="weatherIcon"
+                    src="https://openweathermap.org/img/wn/03d@2x.png"
+                    alt="Weather Icon"
+                    class="w-16 h-16"
+                  />
+                </div>
+
+                <!-- City and Description -->
+                <div class="text-center">
+                  <div
+                    id="weatherCity"
+                    class="text-2xl font-bold text-gray-800"
+                  >
                     No city selected
                   </div>
-                  <div id="weatherDesc" class="text-xs">
+                  <div id="weatherDesc" class="text-gray-500 text-sm mt-1">
                     Search for a city to see weather
                   </div>
                 </div>
-                <div id="weatherTemp" class="text-2xl font-bold">--°C</div>
+
+                <!-- Temperature -->
+                <div
+                  id="weatherTemp"
+                  class="text-4xl font-extrabold text-gray-900"
+                >
+                  --°C
+                </div>
               </div>
             </div>
           </div>
