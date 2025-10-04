@@ -1,4 +1,4 @@
-// ? pomodoro timer
+// ? ================================================pomodoro timer
 const startBtn = document.querySelector("#startBtn");
 const pauseBtn = document.querySelector("#pauseBtn");
 const resetBtn = document.querySelector("#resetBtn");
@@ -111,7 +111,7 @@ resetBtn.addEventListener("click", () => {
   resetTimer();
 });
 
-// ? wheater api section
+// ? =========================================================wheater api section
 const wheaterApiKey = "2cf3c5fe11e8eab4cf657edede99dcd4";
 const cityInput = document.getElementById("cityInput");
 const weatherForm = document.getElementById("weatherForm");
@@ -227,7 +227,7 @@ weatherForm.addEventListener("submit", function (e) {
   cityInput.value = "";
 });
 
-// Expense Tracker
+// ? =========================================================Expense Tracker
 const balance = document.getElementById("balance");
 const expenseDesc = document.getElementById("expenseDesc");
 const expenseAmount = document.getElementById("expenseAmount");
@@ -371,7 +371,7 @@ getTransactionFromStorage();
 renderTrackerList(transactionsArr);
 calculateBalance(transactionsArr);
 
-// Kanban board
+// ? ============================================================Kanban board
 const taskTitle = document.getElementById("taskTitle");
 const todoForm = document.getElementById("todoForm");
 const kanban = document.getElementById("kanban");
@@ -520,3 +520,168 @@ todoForm.addEventListener("submit", (e) => {
 getLocalStorage();
 renderTaskList(tasks);
 renderTaskCount(tasks);
+
+// ?================================================notes app
+const notesForm = document.getElementById("notesForm");
+const noteTitle = document.getElementById("noteTitle");
+const noteBody = document.getElementById("noteBody");
+const notesList = document.getElementById("notesList");
+const editNoteModal = document.getElementById("editNoteModal");
+const closeEditModal = document.getElementById("closeEditModal");
+const editNoteTitle = document.getElementById("editNoteTitle");
+const editNoteForm = document.getElementById("editNoteForm");
+const editNoteBody = document.getElementById("editNoteBody");
+const cancelEdit = document.getElementById("cancelEdit");
+const formWrp = document.querySelector(".formWrp");
+
+let notes = [];
+
+let isEditing = false;
+let editId = null;
+
+function saveNotesToStorage(data) {
+  localStorage.setItem("NOTES", JSON.stringify(data));
+}
+
+function getNotesFromStorage() {
+  const getNotes = JSON.parse(localStorage.getItem("NOTES"));
+
+  if (getNotes && getNotes.length > 0) {
+    notes = getNotes;
+  }
+}
+
+function renderNote(data) {
+  const noteItem = `<article id = "${data.id}"
+                class="noteItem bg-slate-50 border border-slate-100 p-3 rounded-md"
+              >
+                <h4 class="note-title font-semibold text-sm">${data.title}</h4>
+                <p class="note-body text-sm text-gray-600 mt-1">
+                  ${data.body}
+                </p>
+                <div class="mt-2 flex items-center justify-between">
+                  <small class="text-xs text-gray-400">2 days ago</small>
+                  <div class="space-x-2">
+                    <button 
+                      class="editBtn text-xs px-2 py-1 bg-white border rounded text-gray-600"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      class="deleteBtn text-xs px-2 py-1 bg-white border rounded text-red-500"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </article>`;
+  notesList.insertAdjacentHTML("beforeend", noteItem);
+}
+
+function renderNoteList(data) {
+  data.forEach((i) => renderNote(i));
+}
+
+function addNote() {
+  const id = new Date().getTime();
+  const noteTitleValue = noteTitle.value.trim();
+  const noteBodyValue = noteBody.value.trim();
+
+  if (!noteTitleValue || !noteBodyValue) return;
+  if (noteBodyValue.length < 10) {
+    alert("Note body must be at least 10 characters long.");
+    return;
+  }
+
+  const noteObj = {
+    id,
+    title: noteTitleValue,
+    body: noteBodyValue,
+  };
+
+  notes.push(noteObj);
+  saveNotesToStorage(notes);
+  renderNote(noteObj);
+  console.log(notes);
+}
+
+notesForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  addNote();
+  noteTitle.value = "";
+  noteBody.value = "";
+});
+
+notesList.addEventListener("click", (e) => {
+  const currentNote = e.target.closest(".noteItem");
+  const currentId = Number(currentNote.id);
+  const title = currentNote.querySelector(".note-title");
+  const body = currentNote.querySelector(".note-body");
+
+  if (e.target.classList.contains("editBtn")) {
+    editNoteModal.classList.remove("hidden");
+    editId = currentId;
+
+    isEditing = true;
+    editNoteTitle.value = title.innerText;
+    editNoteBody.value = body.innerText;
+  }
+
+  if (e.target.classList.contains("deleteBtn")) {
+    notes = notes.filter((item) => {
+      if (item.id !== currentId) {
+        return item;
+      }
+    });
+
+    saveNotesToStorage(notes);
+    currentNote.remove();
+  }
+});
+
+function closeModal() {
+  editNoteModal.classList.add("hidden");
+  editNoteTitle.value = "";
+  editNoteBody.value = "";
+  isEditing = false;
+  editId = null;
+}
+
+closeEditModal.addEventListener("click", closeModal);
+
+editNoteForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const editNoteTitleValue = editNoteTitle.value.trim();
+  const editNoteBodyValue = editNoteBody.value.trim();
+
+  if (!editNoteTitleValue || !editNoteBodyValue) return;
+  if (editNoteTitleValue.length < 10) {
+    alert("Note body must be at least 10 characters long.");
+    return;
+  }
+
+  notes = notes.map((item) => {
+    if (isEditing && item.id === editId) {
+      return { ...item, title: editNoteTitleValue, body: editNoteBodyValue };
+    }
+    return item;
+  });
+
+  saveNotesToStorage(notes);
+  const editedNote = document.getElementById(editId);
+  editedNote.querySelector(".note-title").innerText = editNoteTitleValue;
+  editedNote.querySelector(".note-body").innerText = editNoteBodyValue;
+  closeModal();
+});
+
+cancelEdit.addEventListener("click", closeModal);
+
+editNoteModal.addEventListener("click", function (e) {
+  if (e.target === this) {
+    closeModal();
+  }
+});
+
+getNotesFromStorage();
+renderNoteList(notes);
